@@ -33,7 +33,7 @@
 		http://www.aliaspooryorik.com/blog/index.cfm/e/posts.details/post/string-concatenation-performance-test-128
 	--->
 
-	<cfset variables.sectionRegEx = createObject("java","java.util.regex.Pattern").compile("\{\{(##|\^)\s*(\w+)\s*}}(.*?)\{\{/\s*\2\s*\}\}", 32)>
+	<cfset variables.sectionRegEx = createObject("java","java.util.regex.Pattern").compile("\{\{(##|\^)\s*(.+)\s*}}(.*?)\{\{/\s*\2\s*\}\}", 32)>
 	<cfset variables.tagRegEx = createObject("java","java.util.regex.Pattern").compile("\{\{(!|\{|&|\>)?\s*(\w+|\.).*?\}?\}\}", 32) />
 
 	<cffunction name="init" returntype="Mustache">
@@ -208,6 +208,15 @@
 	<cffunction name="get" access="private">
 		<cfargument name="key" type="string" required="true" />
 		<cfargument name="context" required="true" />
+		
+		<cfset var keys = listToArray(key, '.') />
+		<cfset var _context = context />
+		<cfset var i_key = "" />
+		
+		<cfif key EQ ".">
+			<cfset keys = arrayNew(1) />
+			<cfset keys[1] = key />
+		</cfif>
     
 		<cfif isQuery(context)>
 			<cfif listContainsNoCase(context.columnList, key)>
@@ -217,15 +226,22 @@
 			</cfif>
 		</cfif>
 		
-		<cfif not isStruct(context) OR not structKeyExists(context, key)>
-			<cfreturn "" />
-		</cfif>
-		
-		<cfif isCustomFunction(context[key])>
-			<cfreturn evaluate("context.#key#('')")>
-		<cfelse>
-			<cfreturn context[key] />
-		</cfif>
+		<cfloop index="i_key" array="#keys#">
+			<cfif not isStruct(_context) OR not structKeyExists(_context, i_key)>
+				<cfreturn "" />
+			</cfif>
+			
+			<cfif keys[arrayLen(keys)] NEQ i_key>
+				<cfset _context = _context[i_key] />
+				<cfcontinue />
+			</cfif>
+			
+			<cfif isCustomFunction(_context[i_key])>
+				<cfreturn evaluate("_context.#i_key#('')")>
+			<cfelse>
+				<cfreturn _context[i_key] />
+			</cfif>
+		</cfloop>
 		
 		<cfreturn "" />
 	</cffunction>
