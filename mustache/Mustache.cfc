@@ -153,7 +153,7 @@
 		<cfset var tagName = ""/>
 		<cfset var matches = arrayNew(1) />
 		
-		<cfloop condition = "true" >
+		<cfloop condition="true">
 			<cfset matches = reFindNoCaseValues(template, variables.tagRegEx) />
 			
 			<cfif arrayLen(matches) EQ 0>
@@ -195,7 +195,7 @@
 
 	<cffunction name="convertToBoolean" access="private" returntype="boolean">
 		<cfargument name="value" type="string" required="true" />
-		<cfreturn isBoolean(value) OR ( isSimpleValue(value) AND value NEQ "" ) />
+		<cfreturn ( isBoolean(value) AND value EQ true ) OR ( not isBoolean(value) AND isSimpleValue(value) AND len(value) GT 0 ) />
 	</cffunction>
 	
 	<cffunction name="readMustacheFile" access="private" returntype="string">
@@ -222,7 +222,7 @@
 		</cfif>
 		
 		<cfif isCustomFunction(context[key])>
-			<cfreturn evaluate("context.#key#('')") />
+			<cfreturn evaluate("context.#key#('')")>
 		<cfelse>
 			<cfreturn context[key] />
 		</cfif>
