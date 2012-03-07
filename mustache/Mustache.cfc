@@ -34,7 +34,7 @@
 	--->
 
 	<cfset variables.sectionRegEx = createObject("java","java.util.regex.Pattern").compile("\{\{(##|\^)\s*(.+)\s*}}(.*?)\{\{/\s*\2\s*\}\}", 32)>
-	<cfset variables.tagRegEx = createObject("java","java.util.regex.Pattern").compile("\{\{(!|\{|&|\>)?\s*(\w+|\.).*?\}?\}\}", 32) />
+	<cfset variables.tagRegEx = createObject("java","java.util.regex.Pattern").compile("\{\{(!|\{|&|\>)?\s*([\w\.]+).*?\}?\}\}", 32) />
 
 	<cffunction name="init" returntype="Mustache">
 		<cfreturn this />
@@ -217,7 +217,7 @@
 			<cfset keys = arrayNew(1) />
 			<cfset keys[1] = key />
 		</cfif>
-    
+		
 		<cfif isQuery(context)>
 			<cfif listContainsNoCase(context.columnList, key)>
 				<cfreturn context[key][context.currentrow] />
