@@ -208,7 +208,7 @@
 	<cffunction name="get" access="private">
 		<cfargument name="key" type="string" required="true" />
 		<cfargument name="context" required="true" />
-		
+    
 		<cfif isQuery(context)>
 			<cfif listContainsNoCase(context.columnList, key)>
 				<cfreturn context[key][context.currentrow] />
@@ -221,8 +221,10 @@
 			<cfreturn "" />
 		</cfif>
 		
-		<cfif listContainsNoCase(context.columnList, key)>
-			<cfreturn context[key][context.currentrow] />
+		<cfif isCustomFunction(context[key])>
+			<cfreturn evaluate("context.#key#('')") />
+		<cfelse>
+			<cfreturn context[key] />
 		</cfif>
 		
 		<cfreturn "" />
