@@ -210,4 +210,33 @@
     <cfset expected = "<ul><li>Say Goodnight, Gracie.</li><li>Goodnight</li></ul>" />
   </cffunction>
 
+  <cffunction name="complexContext">
+    <cfset context = { subContext = { subSubContext = 'world' } } />
+    <cfset template = "Hello {{subContext.subSubContext}}" />
+    <cfset expected = "Hello world" />
+  </cffunction>
+
+  <cffunction name="complexContextWithAFunction">
+    <cfset context = {
+        person = createObject("component", "Person")
+    } />
+    <cfset context.person.firstname = "Chris" />
+    <cfset context.person.lastname = "Wanstrath" />
+    <cfset template = "Mustache was created by {{person.fullname}}." />
+    <cfset expected = "Mustache was created by Chris Wanstrath." />
+  </cffunction>
+
+   <cffunction name="complexSection">
+    <cfset context = { subContext = { set = true } } />
+    <cfset template = "Ready {{##subContext.set}}set {{/subContext.set}}go!" />
+    <cfset expected = "Ready set go!" />
+  </cffunction>
+
+   <cffunction name="complexSectionWithAFunction">
+    <cfset context = { subContext = { set = true } } />
+    <cfset template = "Ready {{##subContext.set}}set {{/subContext.set}}go!" />
+    <cfset expected = "Ready set go!" />
+  </cffunction>
+  
+
 </cfcomponent>

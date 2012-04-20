@@ -6,6 +6,7 @@
 	
 	Copyright (c) 2009 Chris Wanstrath (Ruby)
 	Copyright (c) 2010 Patrick McElhaney (ColdFusion)
+	Copyright (c) 2012 Loic Mahieu (ColdFusion)
 	
 	Permission is hereby granted, free of charge, to any person obtaining
 	a copy of this software and associated documentation files (the
@@ -37,6 +38,10 @@
 	<cfset variables.tagRegEx = createObject("java","java.util.regex.Pattern").compile("\{\{(!|\{|&|\>)?\s*([\w\.]+).*?\}?\}\}", 32) />
 
 	<cffunction name="init" returntype="Mustache">
+    	<cfargument name="fileExtention" default="mustache" type="string" />
+        
+        <cfset variables.fileExtention = arguments.fileExtention />
+        
 		<cfreturn this />
 	</cffunction>
 
@@ -104,10 +109,10 @@
 			
 		</cfif>
 		
-		<cfif convertToBoolean(ctx) XOR type EQ "^">
+        <cfif convertToBoolean(ctx) XOR type EQ "^">
 			<cfreturn inner />
 		</cfif>
-		
+        
 		<cfreturn "" />
 	</cffunction>
 
@@ -194,24 +199,35 @@
 	--->
 
 	<cffunction name="convertToBoolean" access="private" returntype="boolean">
-		<cfargument name="value" type="string" required="true" />
-		<cfreturn ( isBoolean(value) AND value EQ true ) OR ( not isBoolean(value) AND isSimpleValue(value) AND len(value) GT 0 ) />
+		<cfargument name="value" type="any" required="true" />
+        <cfif isBoolean(value)>			<cfreturn value />						</cfif>
+        <cfif isSimpleValue(value)>		<cfreturn len(value) />					</cfif>
+        <cfif isArray(value)>			<cfreturn arrayLen(value) GT 0 />		</cfif>
+        <cfif isStruct(value)>			<cfreturn structCount(value) GT 0 />	</cfif>
+        <cfif isQuery(value)>			<cfreturn value.recordCount GT 0 />		</cfif>
 	</cffunction>
 	
 	<cffunction name="readMustacheFile" access="private" returntype="string">
 		<cfargument name="filename" type="string" required="true" />
 		<cfset var template = "" />
-		<cffile action="read" file="#getDirectoryFromPath(getMetaData(this).path)##filename#.mustache" variable="template"/>
+		<cffile action="read" file="#getDirectoryFromPath(getMetaData(this).path)##filename#.#variables.fileExtention#" variable="template" />
 		<cfreturn trim(template) />
 	</cffunction>
 	
 	<cffunction name="get" access="private">
 		<cfargument name="key" type="string" required="true" />
 		<cfargument name="context" required="true" />
-		
-		<cfset var keys = listToArray(key, '.') />
+        
+        <cfset var keys = "" />
 		<cfset var _context = context />
 		<cfset var i_key = "" />
+        
+        <cfset key = trim(key) />
+        <cfset keys = listToArray(key, '.') />
+        
+        <cfif not arrayLen(keys)>
+        	<cfreturn "" />
+        </cfif>
 		
 		<cfif key EQ ".">
 			<cfset keys = arrayNew(1) />
@@ -225,28 +241,26 @@
 				<cfreturn "" />
 			</cfif>
 		</cfif>
-		
-		<cfloop index="i_key" array="#keys#">
-			<cfif not isStruct(_context) OR not structKeyExists(_context, i_key)>
-				<cfreturn "" />
-			</cfif>
-			
-			<cfif keys[arrayLen(keys)] NEQ i_key>
-				<cfset _context = _context[i_key] />
-				<cfcontinue />
-			</cfif>
-			
-			<cfif isCustomFunction(_context[i_key])>
-				<cfreturn evaluate("_context.#i_key#('')")>
-			<cfelse>
-				<cfreturn _context[i_key] />
-			</cfif>
-		</cfloop>
+        
+        <cfset keys[1] = trim(keys[1]) />
+        <cfif isStruct(context) AND structKeyExists(context, keys[1])>
+        	<cfif arrayLen(keys) EQ 1>
+				<cfif isCustomFunction(context[keys[1]])>
+                    <cfreturn evaluate("context.#keys[1]#('')")>
+                <cfelse>
+                    <cfreturn context[keys[1]] />
+                </cfif>
+            <cfelse>
+            	<cfset keyContext = keys[1] />
+                <cfset arrayDeleteAt(keys, 1) />
+            	<cfreturn get(arrayToList(keys, '.'), context[keyContext]) />
+            </cfif>
+        </cfif>
 		
 		<cfreturn "" />
 	</cffunction>
 
-	<cffunction name="ReFindNoCaseValues" access="private">
+	<cffunction name="reFindNoCaseValues" access="private">
 		<cfargument name="text" type="string" required="true" />
 		<cfargument name="re" type="string" required="true" />
 		
